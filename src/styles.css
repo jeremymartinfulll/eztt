@@ -114,3 +114,12 @@ button {
     background-color: #0f0f0f69;
   }
 }
+
+pre {
+  max-height: 160px;
+  overflow: auto;
+  margin: 1em;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

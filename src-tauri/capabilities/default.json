@@ -4,6 +4,10 @@
   "description": "Capability for the main window",
   "windows": ["main"],
   "permissions": [
-    "core:default"
+    "core:default",
+    "allow-current-ssid",
+    "allow-open-quarksup-window",
+    "allow-quarksup-session",
+    "allow-quarksup-fetch"
   ]
 }

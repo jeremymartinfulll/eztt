@@ -16,8 +16,8 @@
         "label": "main",
         "title": "EZTT",
         "visible": false,
-        "width": 420,
-        "height": 260
+        "width": 560,
+        "height": 480
       }
     ],
     "security": {

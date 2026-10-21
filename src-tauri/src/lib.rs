@@ -1,3 +1,4 @@
+mod quarksup;
 mod wifi;
 
 use tauri::menu::{Menu, MenuItem};
@@ -7,6 +8,21 @@ use tauri::{AppHandle, Manager, WindowEvent};
 #[tauri::command]
 fn current_ssid() -> Result<Option<String>, String> {
     wifi::current_ssid()
+}
+
+#[tauri::command]
+fn open_quarksup_window(app: AppHandle) -> Result<(), String> {
+    quarksup::open_window(&app)
+}
+
+#[tauri::command]
+async fn quarksup_session(app: AppHandle) -> Result<Option<quarksup::Session>, String> {
+    quarksup::session(&app).await
+}
+
+#[tauri::command]
+async fn quarksup_fetch(app: AppHandle, request: quarksup::ApiRequest) -> Result<quarksup::ApiResponse, String> {
+    quarksup::fetch(&app, &request).await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -39,7 +55,12 @@ pub fn run() {
                 let _ = window.hide();
             }
         })
-        .invoke_handler(tauri::generate_handler![current_ssid])
+        .invoke_handler(tauri::generate_handler![
+            current_ssid,
+            open_quarksup_window,
+            quarksup_session,
+            quarksup_fetch
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
