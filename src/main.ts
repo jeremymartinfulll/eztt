@@ -13,10 +13,13 @@ type ApiResponse = {
 
 const SESSION_REFRESH_INTERVAL_MS = 2000;
 const WORKFLOWS_PATH = "/times/v3/requests/workflows/me?locale=fr-FR";
+const TENANT_URL_STORAGE_KEY = "eztt.quarksupTenantUrl";
 
 const ssidElement = document.querySelector<HTMLElement>("#ssid");
 const sessionElement = document.querySelector<HTMLElement>("#session");
 const probeResultElement = document.querySelector<HTMLElement>("#probe-result");
+const probePathElement = document.querySelector<HTMLInputElement>("#probe-path");
+const tenantUrlElement = document.querySelector<HTMLInputElement>("#tenant-url");
 
 async function refreshSsid(): Promise<void> {
   if (!ssidElement) return;
@@ -43,12 +46,41 @@ function describeSession({ employeeId, expiresAt, claimNames }: QuarksupSession)
   return `employeeId ${employeeId ?? "inconnu"} · expire le ${expiry} · claims : ${claimNames.join(", ")}`;
 }
 
-async function probeApi(): Promise<void> {
-  if (!probeResultElement) return;
+async function openQuarksup(event: SubmitEvent): Promise<void> {
+  event.preventDefault();
+  if (!tenantUrlElement || !probeResultElement) return;
+  const url = tenantUrlElement.value.trim();
+  try {
+    await invoke("open_quarksup_window", { url });
+    rememberTenantUrl(url);
+  } catch (error) {
+    probeResultElement.textContent = String(error);
+  }
+}
+
+function rememberedTenantUrl(): string {
+  try {
+    return localStorage.getItem(TENANT_URL_STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function rememberTenantUrl(url: string): void {
+  try {
+    localStorage.setItem(TENANT_URL_STORAGE_KEY, url);
+  } catch {
+    return;
+  }
+}
+
+async function probeApi(event: SubmitEvent): Promise<void> {
+  event.preventDefault();
+  if (!probeResultElement || !probePathElement) return;
   probeResultElement.textContent = "Appel en cours…";
   try {
     const response = await invoke<ApiResponse>("quarksup_fetch", {
-      request: { path: WORKFLOWS_PATH, method: "GET", body: null },
+      request: { path: probePathElement.value, method: "GET", body: null },
     });
     probeResultElement.textContent = `HTTP ${response.status}\n${response.body}`;
   } catch (error) {
@@ -57,8 +89,10 @@ async function probeApi(): Promise<void> {
 }
 
 document.querySelector("#refresh")?.addEventListener("click", refreshSsid);
-document.querySelector("#login")?.addEventListener("click", () => invoke("open_quarksup_window"));
-document.querySelector("#probe")?.addEventListener("click", probeApi);
+document.querySelector<HTMLFormElement>("#login-form")?.addEventListener("submit", openQuarksup);
+if (tenantUrlElement) tenantUrlElement.value = rememberedTenantUrl();
+document.querySelector<HTMLFormElement>("#probe-form")?.addEventListener("submit", probeApi);
+if (probePathElement) probePathElement.value = WORKFLOWS_PATH;
 window.addEventListener("focus", refreshSsid);
 setInterval(refreshSession, SESSION_REFRESH_INTERVAL_MS);
 refreshSsid();

@@ -36,6 +36,8 @@ jobs:
 
       - run: yarn install --frozen-lockfile
 
+      - run: yarn test
+
       - run: cargo test --manifest-path src-tauri/Cargo.toml
 
       - run: yarn tauri build --target ${{ matrix.target }}

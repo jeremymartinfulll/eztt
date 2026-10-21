@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && tsc -p tests && vite build",
     "preview": "vite preview",
+    "test": "vitest run",
     "tauri": "tauri"
   },
   "dependencies": {
@@ -14,7 +15,9 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.12.3",
+    "@types/node": "^26.6.5",
+    "typescript": "~6.0.3",
     "vite": "^8.0.16",
-    "typescript": "~6.0.3"
+    "vitest": "^5.0.5"
   }
 }

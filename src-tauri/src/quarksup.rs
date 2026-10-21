@@ -3,12 +3,12 @@ use std::time::Duration;
 
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tokio::sync::oneshot;
 use tokio::time::{sleep, timeout};
 
 const WINDOW_LABEL: &str = "quarksup";
-const APP_URL: &str = "https://entreprise.quarksup.net";
+const QUARKSUP_DOMAIN_SUFFIX: &str = ".quarksup.net";
 const BRIDGE_SCRIPT: &str = include_str!("quarksup_bridge.js");
 const EVALUATION_TIMEOUT: Duration = Duration::from_secs(5);
 const RESPONSE_TIMEOUT: Duration = Duration::from_secs(30);
@@ -35,11 +35,11 @@ pub struct ApiResponse {
     body: String,
 }
 
-pub fn open_window(app: &AppHandle) -> Result<(), String> {
+pub fn open_window(app: &AppHandle, tenant_url: &str) -> Result<(), String> {
     let window = match app.get_webview_window(WINDOW_LABEL) {
         Some(window) => window,
         None => {
-            let url = APP_URL.parse().map_err(|error| format!("{error}"))?;
+            let url = parse_tenant_url(tenant_url)?;
             WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::External(url))
                 .title("quarksUp")
                 .inner_size(1100.0, 800.0)
@@ -50,6 +50,16 @@ pub fn open_window(app: &AppHandle) -> Result<(), String> {
     };
     window.show().map_err(|error| error.to_string())?;
     window.set_focus().map_err(|error| error.to_string())
+}
+
+fn parse_tenant_url(raw: &str) -> Result<Url, String> {
+    let invalid = || format!("L'URL quarksUp doit être de la forme https://<entreprise>{QUARKSUP_DOMAIN_SUFFIX}");
+    let url: Url = raw.trim().parse().map_err(|_| invalid())?;
+    let is_quarksup_host = url.host_str().is_some_and(|host| host.ends_with(QUARKSUP_DOMAIN_SUFFIX));
+    if url.scheme() != "https" || !is_quarksup_host {
+        return Err(invalid());
+    }
+    Ok(url)
 }
 
 pub async fn session(app: &AppHandle) -> Result<Option<Session>, String> {
@@ -112,7 +122,19 @@ fn decode<T: DeserializeOwned>(raw: &str) -> Result<Option<T>, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{decode, ApiResponse};
+    use super::{decode, parse_tenant_url, ApiResponse};
+
+    #[test]
+    fn accepts_a_quarksup_tenant_url() {
+        assert!(parse_tenant_url(" https://entreprise.quarksup.net ").is_ok());
+    }
+
+    #[test]
+    fn rejects_urls_outside_quarksup_or_without_https() {
+        for url in ["http://entreprise.quarksup.net", "https://quarksup.net.evil.com", "https://evilquarksup.net", "entreprise"] {
+            assert!(parse_tenant_url(url).is_err(), "{url} devrait être refusée");
+        }
+    }
 
     #[test]
     fn decodes_a_json_string_returned_by_the_webview() {

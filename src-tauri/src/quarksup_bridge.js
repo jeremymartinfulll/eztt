@@ -1,5 +1,6 @@
 (() => {
-  if (location.origin !== "https://entreprise.quarksup.net" || window.__eztt) return;
+  const isTenantPage = location.protocol === "https:" && location.hostname.endsWith(".quarksup.net");
+  if (!isTenantPage || window.__eztt) return;
 
   const API = "https://api.quarksup.net";
   const nativeFetch = window.fetch.bind(window);
@@ -44,7 +45,7 @@
     return nativeSetRequestHeader.call(this, name, value);
   };
 
-  // Les appels partent de la page : quarksUp répond 403 (anti-bot) aux requêtes externes.
+  // Les appels partent de la page : l'API quarksUp refuse les requêtes qui ne viennent pas de son application web.
   async function perform({ path, method, body }) {
     try {
       const response = await nativeFetch(API + path, {

@@ -12,8 +12,8 @@ fn current_ssid() -> Result<Option<String>, String> {
 
 // Doit rester async : créer une fenêtre depuis une commande synchrone bloque le thread UI sur Windows.
 #[tauri::command]
-async fn open_quarksup_window(app: AppHandle) -> Result<(), String> {
-    quarksup::open_window(&app)
+async fn open_quarksup_window(app: AppHandle, url: String) -> Result<(), String> {
+    quarksup::open_window(&app, &url)
 }
 
 #[tauri::command]

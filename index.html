@@ -16,10 +16,14 @@
 
       <h2>quarksUp</h2>
       <p>Session : <strong id="session">…</strong></p>
-      <div>
-        <button id="login" type="button">Se connecter</button>
-        <button id="probe" type="button">Tester l'API</button>
-      </div>
+      <form id="login-form">
+        <input id="tenant-url" size="36" placeholder="https://entreprise.quarksup.net" />
+        <button type="submit">Se connecter</button>
+      </form>
+      <form id="probe-form">
+        <input id="probe-path" size="48" />
+        <button type="submit">Tester l'API</button>
+      </form>
       <pre id="probe-result"></pre>
     </main>
   </body>
